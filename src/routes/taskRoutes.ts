@@ -3,13 +3,28 @@ import * as taskController from "../controller/taskController";
 
 const router = Router();
 
-/*
-    GET /tasks: Retrieve all tasks
-    POST /tasks: Create a new task
-    GET /tasks/:id: Retrieve a task by ID
-    PUT /tasks/:id: Update a task by ID
-    DELETE /tasks/:id: Delete a task by ID
-*/
+/**
+ * @openapi
+ * /tasks:
+ *   get:
+ *     summary: Get all tasks
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: title
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: List of tasks
+ */
 
 router.get("/", taskController.getAllTasks);
 
