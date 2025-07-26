@@ -1,15 +1,39 @@
 import Task from "../models/Task";
 import { Request, Response } from "express";
+import { Op } from "sequelize";
 const { v4: uuidv4 } = require("uuid");
 
-export const getAllTasks = (req: Request, res: Response) => {
-  Task.findAll()
-    .then((tasks) => {
-      res.json({ message: "All Tasks", tasks });
-    })
-    .catch((err) => {
-      res.status(500).json({ message: "Error fetching tasks", error: err });
+export const getAllTasks = async (req: Request, res: Response) => {
+  const page = parseInt(req.query.page as string) || 1;
+  const limit = parseInt(req.query.limit as string) || 10;
+  const offset = (page - 1) * limit;
+  const title = req.query.title as string | undefined;
+
+  const where: any = {};
+  if (title) {
+    where.title = { [Op.like]: `%${title}%` };
+  }
+
+  try {
+    const { rows: tasks, count } = await Task.findAndCountAll({
+      where,
+      limit,
+      offset,
+      order: [['createdAt', 'DESC']],
     });
+    res.json({
+      message: "All Tasks",
+      tasks,
+      pagination: {
+        total: count,
+        page,
+        limit,
+        totalPages: Math.ceil(count / limit),
+      },
+    });
+  } catch (err) {
+    res.status(500).json({ message: "Error fetching tasks", error: err });
+  }
 };
 
 export const getTaskById = (req: Request, res: Response) => {
