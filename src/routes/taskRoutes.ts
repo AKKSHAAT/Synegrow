@@ -1,9 +1,10 @@
 import { Router } from "express";
+import { Task } from "../types/tasks";
 const { v4: uuidv4 } = require("uuid");
 
 const router = Router();
 
-let tasks: any[] = [];
+let tasks: Task[] = [];
 
 /*
     GET /tasks: Retrieve all tasks
@@ -28,15 +29,31 @@ router.get("/:id", (req, res) => {
 
 router.post("/", (req, res) => {
   const newTask = req.body;
-  const taskWithId = { ...newTask, id: uuidv4() };
+  const now = new Date().toISOString();
+  const taskWithId = {
+    id: uuidv4(),
+    title: newTask.title,
+    description: newTask.description,
+    status: newTask.status || "PENDING",
+    createdAt: now,
+    updatedAt: now,
+  };
   tasks.push(taskWithId);
   res.json({ message: "Task saved", tasks });
 });
 
 router.put("/:id", (req, res) => {
   const taskId = req.params.id;
-  const updatedTask = req.body;
+
+  const now = new Date().toISOString();
   const taskIndex = tasks.findIndex((t) => t.id === taskId);
+
+  const updatedTask = {
+    title: req.body.title,
+    description: req.body.description,
+    status: req.body.status || "PENDING",
+    updatedAt: now,
+  };
   if (taskIndex === -1) {
     return res.status(404).json({ message: "Task not found" });
   }
