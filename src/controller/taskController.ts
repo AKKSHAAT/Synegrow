@@ -1,7 +1,15 @@
 import Task from "../models/Task";
 import { Request, Response } from "express";
 import { Op } from "sequelize";
+import { z } from "zod";
+
 const { v4: uuidv4 } = require("uuid");
+
+const taskSchema = z.object({
+  title: z.string().min(1, "Title is required"),
+  description: z.string().optional(),
+  status: z.enum(["PENDING", "COMPLETED", "IN_PROGRESS"]).optional(),
+});
 
 export const getAllTasks = async (req: Request, res: Response) => {
   const page = parseInt(req.query.page as string) || 1;
@@ -19,7 +27,7 @@ export const getAllTasks = async (req: Request, res: Response) => {
       where,
       limit,
       offset,
-      order: [['createdAt', 'DESC']],
+      order: [["createdAt", "DESC"]],
     });
     res.json({
       message: "All Tasks",
@@ -51,7 +59,11 @@ export const getTaskById = (req: Request, res: Response) => {
 };
 
 export const createTask = (req: Request, res: Response) => {
-  const { title, description, status } = req.body;
+  const result = taskSchema.safeParse(req.body);
+  if (!result.success) {
+    return res.status(400).json({ error: result.error.issues });
+  }
+  const { title, description, status } = result.data;
   Task.create({
     id: uuidv4(),
     title,
@@ -68,7 +80,11 @@ export const createTask = (req: Request, res: Response) => {
 
 export const updateTask = (req: Request, res: Response) => {
   const taskId = req.params.id;
-  const { title, description, status } = req.body;
+  const result = taskSchema.partial().safeParse(req.body);
+  if (!result.success) {
+    return res.status(400).json({ error: result.error.issues });
+  }
+  const { title, description, status } = result.data;
   Task.findByPk(taskId)
     .then((task) => {
       if (!task) {
